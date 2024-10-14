@@ -7,7 +7,7 @@ const montserrat = Montserrat({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    template: `%s | ${process.env.NEXT_WEB_NAME}`,
+    template: `${process.env.NEXT_WEB_NAME}: %s`,
     default: process.env.NEXT_WEB_NAME!
   },
   description: process.env.NEXT_WEB_DESC,

@@ -9,12 +9,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String    @id
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
   username     String    @unique
   displayName  String
   email        String?   @unique
@@ -29,8 +29,8 @@ model User {
 }
 
 model Session {
-  id        String   @id
-  userId    String
+  id        String   @id @map("_id")
+  userId    String   @db.ObjectId
   expiresAt DateTime
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

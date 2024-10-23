@@ -52,7 +52,7 @@ async function WhoToFollow() {
                 usersToFollow.map((user) => (
                     <div key={user.id} className=" flex items-center justify-between gap-3">
                         <Link href={`/users/${user.username}`} className=" flex items-center gap-3">
-                            <UserTooltip user={user}>
+                            <UserTooltip isPending={false} user={user}>
                                 <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" />
                             </UserTooltip>
                             <div>

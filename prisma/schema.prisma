@@ -13,26 +13,135 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  username     String    @unique
-  displayName  String
-  email        String?   @unique
-  passwordHash String?
-  googleId     String?   @unique
-  avatarUrl    String?
-  bio          String?
-  session      Session[]
-  createdAt    DateTime  @default(now())
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId String
+  recipient   User             @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuerId    String
+  issuer      User             @relation("issuer", fields: [issuerId], references: [id], onDelete: Cascade)
+  postId      String?          @db.ObjectId
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  read        Boolean          @default(false)
 
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  FOLLOW
+  COMMENT
+  LIKE
+}
+
+model User {
+  id                   String         @id @map("_id")
+  username             String         @unique
+  displayName          String
+  email                String?        @unique
+  passwordHash         String?
+  googleId             String?        @unique
+  avatarUrl            String?
+  bio                  String?
+  session              Session[]
+  createdAt            DateTime       @default(now())
+  posts                Post[]
+  following            Follow[]       @relation("following")
+  followers            Follow[]       @relation("followers")
+  likes                Like[]
+  bookmarks            Bookmark[]
+  comments             Comment[]
+  recivedNotifications Notification[] @relation("recipient")
+  issuedNotifications  Notification[] @relation("issuer")
+
+  @@index([displayName, username])
   @@map("users")
 }
 
 model Session {
   id        String   @id @map("_id")
-  userId    String   @db.ObjectId
   expiresAt DateTime
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model Follow {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String
+  follower    User   @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Post {
+  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+  content             String
+  authorId            String
+  author              User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt           DateTime       @default(now())
+  attachments         Media[]
+  likes               Like[]
+  bookmarks           Bookmark[]
+  comments            Comment[]
+  linkedNotifications Notification[]
+
+  @@index([content])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("comments")
+}
+
+model Media {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  url       String
+  postId    String?   @db.ObjectId
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type      MediaType
+  createdAt DateTime  @default(now())
+
+  @@map("post-media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Like {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId String @db.ObjectId
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String?  @db.ObjectId
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
 }

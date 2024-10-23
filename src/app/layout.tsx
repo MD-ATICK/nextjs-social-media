@@ -1,7 +1,12 @@
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { NextSSRPlugin } from '@uploadthing/react/next-ssr-plugin';
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { extractRouterConfig } from "uploadthing/server";
+import { fileRoute } from "./api/uploadthing/core";
 import "./globals.css";
+import ReactQueryProvider from "./ReactQueryProvider";
 
 const montserrat = Montserrat({ subsets: ['latin'] })
 
@@ -20,18 +25,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${montserrat.className}`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-
-        </ThemeProvider>
+      <body className={`${montserrat.className}`}>
+        <NextSSRPlugin routerConfig={extractRouterConfig(fileRoute)} />
+        <ReactQueryProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            {children}
+          </ThemeProvider>
+        </ReactQueryProvider>
+        <Toaster />
       </body>
     </html>
   );

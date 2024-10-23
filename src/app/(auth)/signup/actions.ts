@@ -2,8 +2,10 @@
 
 import { lucia } from "@/auth";
 import prisma from "@/lib/prisma";
+import streamServerClient from "@/lib/stream";
 import { signUpSchema, SignUpValues } from "@/lib/validation";
 import { hash } from "@node-rs/argon2";
+import { generateIdFromEntropySize } from "lucia";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -20,7 +22,7 @@ export async function signUp(credentials: SignUpValues): Promise<{ error?: strin
             parallelism: 1
         })
 
-        // const userId = generateIdFromEntropySize(10)
+        const userId = generateIdFromEntropySize(10)
         const existingUsername = await prisma.user.findFirst({
             where: {
                 username: {
@@ -47,18 +49,27 @@ export async function signUp(credentials: SignUpValues): Promise<{ error?: strin
             return { error: 'Email is already registered' }
         }
 
-        const user = await prisma.user.create({
-            data: {
+        await prisma.$transaction(async (tx) => {
+            await tx.user.create({
+                data: {
+                    id: userId,
+                    username,
+                    displayName: username,
+                    email,
+                    passwordHash
+                }
+            })
+            await streamServerClient.upsertUser({
+                id: userId,
                 username,
-                displayName: username,
-                email,
-                passwordHash
-            }
+                name: username
+            })
         })
 
-        const session = await lucia.createSession(user.id, {})
+
+
+        const session = await lucia.createSession(userId, {})
         const sessionCookie = lucia.createSessionCookie(session.id)
-        console.log({ session, sessionCookie })
         cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes)
 
         return redirect('/')

@@ -1,9 +1,9 @@
 "use client"
 
+import LoadingButton from "@/components/loadingButton"
+import { PasswordInput } from "@/components/passwordInput"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import LoadingButton from "@/components/ui/loadingButton"
-import { PasswordInput } from "@/components/ui/passwordInput"
 import { signUpSchema, SignUpValues } from "@/lib/validation"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState, useTransition } from "react"
@@ -28,7 +28,6 @@ export default function SignUpForm() {
 
   const onsubmit = async (values: SignUpValues) => {
     setError('')
-    console.log(values)
     startTransition(async () => {
       const { error } = await signUp(values)
       if (error) {
@@ -85,7 +84,7 @@ export default function SignUpForm() {
           error &&
         <p className=" h-10 w-full rounded-lg bg-[#f9a0a0] text-sm text-red-600 flex justify-center items-center" >{error}</p>
         }
-       <LoadingButton className=" w-full" disabled={isPending}>Sign Up</LoadingButton>
+       <LoadingButton className=" w-full" isPending={isPending} disabled={isPending}>Sign Up</LoadingButton>
 
       </form>
     </Form>
